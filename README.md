@@ -1,15 +1,17 @@
-# Customer Retention & Transaction Analytics — Excel & SQL Stages
+# Customer Retention & Transaction Analytics — Full Project Documentation
 
-> **Fresher-level Data Analyst portfolio project** — customer behavior, transaction performance, and retention analysis, built end-to-end across Excel and MySQL, with results cross-validated between the two.
+> **Fresher-level Data Analyst portfolio project** — customer behavior, transaction performance, and retention analysis, built end-to-end across Excel, MySQL, and Python, with every core number cross-validated across all three tools.
 
-This document combines the two completed stages of the project. Each stage builds on the same 5-table schema and reaches the same headline numbers, verified independently in each tool.
+This document combines all three completed stages of the project. Each stage builds on the same 5-table schema and reaches the same headline numbers, verified independently in each tool.
+
+A correction note at the very end documents what was fixed while combining this document.
 
 ---
 
 ## Table of Contents
 
 - [Dataset Scale](#dataset-scale)
-  
+
 - [Part 1 — Excel Stage](#part-1--excel-stage)
   - [1. Data Quality & Cleaning](#1-data-quality--cleaning)
   - [2. Power Pivot Data Model](#2-power-pivot-data-model)
@@ -23,7 +25,7 @@ This document combines the two completed stages of the project. Each stage build
   - [10. Pivot Charts](#10-pivot-charts)
   - [11. Validation](#11-validation)
   - [12. Key Business Questions Answered](#12-key-business-questions-answered)
-    
+  
 - [Part 2 — SQL Stage](#part-2--sql-stage)
   - [1. Database Design & Schema](#1-database-design--schema)
   - [2. Staging Tables — Why They Were Needed](#2-staging-tables--why-they-were-needed)
@@ -35,8 +37,25 @@ This document combines the two completed stages of the project. Each stage build
   - [8. 30 Core Business Queries](#8-30-core-business-queries)
   - [9. Cross-Tool Validation — SQL vs. Excel](#9-cross-tool-validation--sql-vs-excel)
   - [10. SQL Stage Status](#10-sql-stage-status)
+  
+- [Part 3 — Python Stage](#part-3--python-stage)
+  - [1. Data Loading](#1-data-loading)
+  - [2. Data Cleaning Confirmation](#2-data-cleaning-confirmation)
+  - [3. Exploratory Data Analysis (EDA)](#3-exploratory-data-analysis-eda)
+  - [4. Statistical Analysis](#4-statistical-analysis)
+  - [5. Customer Analysis & RFM](#5-customer-analysis--rfm)
+  - [6. Trend Analysis](#6-trend-analysis)
+  - [7. Visualizations](#7-visualizations)
+  - [8. Key Business Insights](#8-key-business-insights)
+  - [Python Stage Status](#python-stage-status)
+  
 - [Repository Structure](#repository-structure)
+
+- [Tools Used](#tools-used)
+
 - [Next Stage](#next-stage)
+
+- [Correction Note](#correction-note)
 
 ---
 
@@ -98,7 +117,7 @@ The data was assessed before analysis. The objective was to **measure issues fir
 | Blank customer city | 278 | Converted to `Unknown` |
 | Blank acquisition channel | 375 | Converted to `Unknown` |
 | City case/space inconsistency | Multiple variants | Standardized with `TRIM` + `PROPER` |
-| Quantity > 10 | 452 rows | Flagged as `Bulk Order`; not deleted |
+| Quantity > 10 | 457 rows | Flagged as `Bulk Order`; not deleted |
 | Ticket satisfaction/resolution blanks | 1,609 | Kept blank because they correspond to unresolved/open tickets |
 | Ticket transaction ID blanks | 700 | Kept blank because these are valid general inquiries |
 
@@ -487,7 +506,7 @@ All 30 queries are organized into 6 sections, matching the Excel-stage business 
 5. **Ranking and tracking trends over time** — purchase sequence, top 20 customers, month-over-month change, running revenue total, top product per category
 6. **Answering the bigger business questions** — above-average spenders, top 10 products, payment method revenue, weekday vs. weekend, support resolution/satisfaction by category, acquisition channel performance
 
-Check the top 30 core business queries: https://github.com/Saurabh140504/customer-retention-transaction-analytics/tree/51c027935adb8b5535477aa1ad8f22bd6e024d04/SQL
+Full queries with plain-language explanations: [`sql/30_core_queries.sql`](./sql/30_core_queries.sql) · [`sql/queries_explained.md`](./sql/queries_explained.md)
 
 ---
 
@@ -522,6 +541,154 @@ The 180-day inactivity query exists specifically to reproduce and confirm the Ex
 
 ---
 
+# Part 3 — Python Stage
+
+> Going deeper than Excel and SQL with statistical analysis, outlier investigation, RFM segmentation, and visual storytelling using Python.
+
+**Workflow:** Load Data → Confirm Cleaning → EDA → Statistical Analysis → Customer Analysis (RFM) → Trend Analysis → Visualizations → Business Insights
+
+### Project Objective
+
+This stage doesn't re-clean the data — that was already done and validated in Excel and SQL. Instead, Python is used to:
+
+- Rebuild the same core numbers (repeat rate, inactive count) a third time, independently, as a final cross-tool check
+- Apply real statistical methods (IQR outlier detection, percentiles, correlation) that Excel and SQL couldn't easily do
+- Build RFM segmentation using proper quintile-based scoring
+- Turn every major finding into a structured, defensible business insight — not just a chart
+
+### File
+
+**`python/Customer_Retention_Transaction_Analytics.ipynb`** — a single Jupyter notebook, organized into clear sections matching the workflow above. Code, output, charts, and written interpretation sit together throughout.
+
+---
+
+## 1. Data Loading
+
+Data is pulled directly from the `RT` MySQL database via `mysql.connector`, rather than re-exporting to CSV — this avoids introducing a fourth copy of the data that could drift from the validated source.
+
+**Security note:** the database password is entered at runtime using `getpass()`, never hardcoded in the notebook — required before the file can be safely shared or pushed to GitHub.
+
+| Table | Expected Rows |
+|---|---:|
+| `Customers` | 7,000 |
+| `Products` | 50 |
+| `Date_Table` | 1,156 |
+| `Transactions` | 24,244 |
+| `Customers_Support` | 6,035 |
+
+---
+
+## 2. Data Cleaning Confirmation
+
+This stage **confirms** the cleaning already done in Excel and SQL — it doesn't repeat it.
+
+- Null counts in `customer_id`, `product_id`, `total_amount` — confirmed 0
+- Null counts in `resolution_hours` / `satisfaction_score` — confirmed structural (open tickets), not data errors
+- Duplicate `transaction_id` and `ticket_id` — confirmed 0
+- Cleaned city and channel values — confirmed only expected clean categories appear (6 cities + Unknown, 4 channels + Unknown)
+- Date columns converted to proper `datetime` type
+
+---
+
+## 3. Exploratory Data Analysis (EDA)
+
+- **Univariate:** distribution of `total_amount` and `quantity`, breakdowns of `order_status` and `payment_method`
+- **Bivariate:** revenue and transaction count by order status; revenue by product category
+- **Multivariate:** revenue broken down by city and category together
+
+Every merge is validated with a row-count check immediately after — all merges hold at 24,244 rows throughout.
+
+---
+
+## 4. Statistical Analysis
+
+- Mean, median, and standard deviation for `total_amount` and `quantity`
+- Percentile breakdown of `quantity` (50th, 90th, 95th, 99th)
+- Formal outlier detection using the **IQR method**, compared directly against the business "Bulk Order" rule (quantity > 10)
+- Correlation check across `quantity`, `unit_price`, `discount_amount`, `total_amount`
+
+### Business Rule vs. Statistical Outlier — a key finding
+
+| Method | Threshold | Transactions Flagged | % of Total |
+|---|---:|---:|---:|
+| Business Bulk Order rule | quantity > 10 | 457 | 1.9% |
+| IQR statistical method | quantity > ~3.5 | 1,601 | 6.6% |
+
+The business rule is far more conservative than a pure statistical cutoff — interpreted as the Bulk Order flag being a deliberate business threshold for identifying wholesale-style buyers, not a general statistical outlier boundary. Both numbers are legitimate; they answer different questions.
+
+---
+
+## 5. Customer Analysis & RFM
+
+**Customer Summary** rebuilt independently in pandas — total transactions, total revenue, first/last purchase date, and days since last purchase (anchored to the dataset's own max date, not `TODAY()`).
+
+**Segmentation:** One-Time vs. Repeat by transaction count; Inactive flag at 180+ days since last purchase.
+
+**RFM Scoring:** Recency, Frequency, and Monetary each scored 1–5 using quintile-based ranking (`pd.qcut` on ranked values), applied consistently across all three dimensions, combined into a 3-digit RFM score per customer.
+
+### Cross-Tool Validation
+
+| Metric | Excel | SQL | Python |
+|---|---:|---:|---:|
+| Repeat Customers | 3,907 | 3,907 | 3,907 |
+| One-Time Customers | 3,093 | 3,093 | 3,093 |
+| Inactive Customers (180+ days) | 1,394 | 1,394 | 1,394 |
+
+All three tools agree exactly — the most important checkpoint in the entire project.
+
+---
+
+## 6. Trend Analysis
+
+- Monthly revenue and transaction count
+- Month-over-month revenue change
+- Weekday vs. weekend transaction pattern (using `Date_Table.is_weekend`)
+- Category revenue trend over time
+
+---
+
+## 7. Visualizations
+
+| Chart | Type | Purpose |
+|---|---|---|
+| Monthly Revenue Trend | Line | Shows change over time |
+| Revenue by Product Category | Bar | Compares categories |
+| One-Time vs. Repeat Customers | Bar | Shows segment composition |
+| Recency vs. Revenue (colored by Frequency) | Scatter | Shows relationship across 3 RFM dimensions at once |
+
+---
+
+## 8. Key Business Insights
+
+Three major findings documented using **Observation → Evidence → Interpretation → Business Action**:
+
+1. **Bulk Orders are a distinct, deliberate segment** — not data errors, possibly worth a separate pricing tier or account type.
+2. **55.8% repeat rate, but 19.9% of customers are inactive** — a lower-cost win-back target than new acquisition.
+3. **Revenue is concentrated in a few categories** (Electronics, Home, Apparel) — worth reviewing investment in underperforming categories (Beauty, Sports).
+
+A note states explicitly that the support-ticket-vs-retention relationship reflects correlation, not a proven cause.
+
+---
+
+## Python Stage Status
+
+| Area | Status |
+|---|---|
+| Data loaded from `RT` database, row counts confirmed | ✅ Complete |
+| Cleaning re-confirmed (not re-done) | ✅ Complete |
+| EDA (univariate, bivariate, multivariate) | ✅ Complete |
+| Statistical analysis & outlier investigation | ✅ Complete |
+| Customer Summary & RFM segmentation | ✅ Complete |
+| Cross-tool validation vs. Excel and SQL | ✅ Complete — exact match |
+| Trend analysis | ✅ Complete |
+| Visualizations | ✅ Complete |
+| Business insights documented | ✅ Complete |
+| Credentials removed from notebook | ✅ Complete |
+
+**Python checkpoint: stage completed and validated against Excel and SQL.**
+
+---
+
 ## Repository Structure
 
 ```text
@@ -537,10 +704,10 @@ Customer-Retention-Transaction-Analytics/
 │       └── pivot-charts-overview.png
 │
 ├── sql/
-│   ├── Customer Retention & Transaction Analysis Updated
+│   ├── 30_core_queries.sql
 │
 ├── python/
-│   └── ...
+│   └── Customer_Retention_Transaction_Analytics.ipynb
 │
 ├── powerbi/
 │   └── ...
@@ -549,12 +716,20 @@ Customer-Retention-Transaction-Analytics/
     └── ...
 ```
 
-**Tools used — Excel stage:** Microsoft Excel · Excel Tables · Power Pivot · PivotTables · Pivot Charts · XLOOKUP · COUNTIF/COUNTIFS · SUMIF · MINIFS/MAXIFS · PERCENTILE.INC · Customer segmentation · RFM analysis
+---
 
-**Tools used — SQL stage:** MySQL / MySQL Workbench · Table Data Import Wizard · Staging tables + `STR_TO_DATE()`/`NULLIF()` conversion · Joins (`INNER`, `LEFT`) · CTEs (`WITH`) · Window functions (`ROW_NUMBER`, `RANK`, `LAG`, `SUM() OVER`) · Foreign key constraints · `information_schema` relationship auditing
+## Tools Used
+
+**Excel stage:** Microsoft Excel · Excel Tables · Power Pivot · PivotTables · Pivot Charts · XLOOKUP · COUNTIF/COUNTIFS · SUMIF · MINIFS/MAXIFS · PERCENTILE.INC · Customer segmentation · RFM analysis
+
+**SQL stage:** MySQL / MySQL Workbench · Table Data Import Wizard · Staging tables + `STR_TO_DATE()`/`NULLIF()` conversion · Joins (`INNER`, `LEFT`) · CTEs (`WITH`) · Window functions (`ROW_NUMBER`, `RANK`, `LAG`, `SUM() OVER`) · Foreign key constraints · `information_schema` relationship auditing
+
+**Python stage:** Python (pandas, numpy) · matplotlib, seaborn · mysql-connector-python · Jupyter Notebook · `getpass` (secure credential entry)
 
 ---
 
 ## Next Stage
 
-**Python — Data Loading → EDA → Statistical Summary → Outlier Investigation → Customer & Trend Analysis → Visualizations**
+**Power BI — Data Modeling (Star Schema) → DAX Measures → 4-Page Interactive Report → Slicers & Drill-Through**
+
+---
