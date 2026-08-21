@@ -728,8 +728,209 @@ Customer-Retention-Transaction-Analytics/
 
 ---
 
-## Next Stage
+# Customer Retention & Transaction Analytics — Power BI Stage
 
-**Power BI — Data Modeling (Star Schema) → DAX Measures → 4-Page Interactive Report → Slicers & Drill-Through**
+> **Fresher-level Data Analyst portfolio project** — turning the validated Excel, SQL, and Python analysis into a 5-page interactive Power BI report.
+
+**Workflow:** Data Preparation → Star Schema Data Model → DAX Measures → Dashboard Design (5 Pages) → Interactivity → Validation
 
 ---
+
+## Project Objective
+
+This stage doesn't introduce new analysis — every number in this report was already calculated and cross-validated in Excel, SQL, and Python. Power BI's role is to:
+
+- Rebuild the same star schema as a live, filterable data model
+- Recreate every core KPI as a DAX measure, validated against the three earlier tools
+- Present the findings as a genuinely interactive report — 5 focused pages, no repeated charts, each tied to a specific set of business questions
+- Correctly handle the one relationship (`Transactions ↔ Customers_Support`) that was deliberately kept inactive throughout the project, activating it only where a specific visual needs it
+
+---
+
+## Data Model
+
+Connected directly to the `RT` MySQL database — same 5 core tables used throughout the project, plus the `RFM` table built from the Python-stage scoring.
+
+**Relationships:**
+
+```text
+Customers   → Transactions        (customer_id)
+Products    → Transactions        (product_id)
+Date_Table  → Transactions        (transaction_date ↔ date_key)
+Customers   → Customers_Support   (customer_id)
+Date_Table  → Customers_Support   (ticket_date ↔ date_key)
+Customers   → RFM                 (customer_id)
+```
+
+**Inactive relationship (by design):**
+```text
+Transactions[transaction_id] → Customers_Support[transaction_id]   — INACTIVE
+```
+`Transactions` and `Customers_Support` already connect indirectly through `Customers` and `Date_Table`. A direct active link between them would create an ambiguous filter path across the same three tables — the same reasoning applied in the Excel Data Model and the SQL foreign key design. This relationship is activated only inside specific DAX measures using `USERELATIONSHIP()`, for example when calculating ticket counts by product category.
+
+"Auto date/time" is disabled in Power BI's options, since a proper `Date_Table` already exists — avoiding redundant hidden date hierarchies.
+
+---
+
+## DAX Measures
+
+Core measures built and validated against Excel/SQL/Python:
+
+| Measure | Purpose |
+|---|---|
+| `Total Revenue`, `Total Transaction`, `Total Customers` | Headline totals |
+| `Completed Revenue` | Revenue from Completed orders only |
+| `Average Transaction Value` | Typical order size |
+| `Repeat Customers`, `One Time Customers`, `Repeated Customer Rate` | Retention split |
+| `Max Transaction Date`, `Inactive Customers`, `Inactive Customers Rate` | Recency-based inactivity, anchored to the dataset's own max date (never `TODAY()`) |
+| `Active Customers`, `At-Risk Customers` | 3-tier activity segmentation |
+| `Bulk Orders`, `Bulk Order Rate`, `Standard Orders`, `Standard Order Rate` | Order-size segmentation (matches the corrected 457 figure) |
+| `Revenue Per Customer` | CLV proxy |
+| `Customers With Ticket`, `Customers Without Ticket`, `Revenue With Ticket`, `Revenue Without Ticket`, `Transactions With Ticket`, `Transactions Without Ticket` | Support-ticket-vs-retention comparison |
+| `Average Resolution Hours`, `Average Satisfaction Score` | Support performance |
+
+All measures were checked against the known validated numbers before the dashboard was considered complete — see [Cross-Tool Validation](#cross-tool-validation) below.
+
+---
+
+## Dashboard Pages
+
+**5 pages, no chart repeated across any page.**
+
+### Page 1 — Executive Overview
+<img width="1317" height="751" alt="executive overview 01 png" src="https://github.com/user-attachments/assets/e762b81b-2ee0-4aa5-a877-bf83239247bc" />
+
+**Answers:** Overall revenue, transactions, and customers; repeat rate; monthly trend; revenue by order status.
+- KPI cards: Total Revenue, Total Transaction, Total Customers, Repeat Rate, Completed Revenue
+- Line chart: Monthly Revenue Trend
+- Bar chart: Revenue by Order Status
+- Slicer: Year
+
+### Page 2 — Customer Analysis
+<img width="1316" height="742" alt="customer analysis 02 png" src="https://github.com/user-attachments/assets/f3502ecf-cf9d-45b3-9238-42db7c8bd2ce" />
+
+**Answers:** Repeat vs. one-time split; top spenders; value segmentation; acquisition channel performance.
+- KPI cards: Total Customers, Repeat Customers, One Time Customers, Revenue Per Customer
+- Bar chart: Top 10 Customers by Revenue
+- Donut: Repeat Customers and One Time Customers
+- Column chart: Customer Count by Value Segment
+- Bar chart: Revenue by Acquisition Channel
+- Slicer: Acquisition Channel, City
+
+### Page 3 — Retention & RFM Analysis
+<img width="1321" height="745" alt="retention   rfm analysis 03 png" src="https://github.com/user-attachments/assets/32cc5efc-545d-4744-b3ee-1ea2f7be3bdc" />
+
+**Answers:** Active/At-Risk/Inactive breakdown; RFM segment distribution; support-ticket impact on revenue; recency-vs-revenue relationship.
+- KPI cards: Active Customers, At-Risk Customers, Inactive Customers, Inactive Rate, Repeat Rate
+- Column chart: Customer Count by Activity Segment
+- Donut: Revenue With Ticket and Revenue Without Ticket
+- Bar chart: Customer Count by RFM Segment
+- Donut: Transaction With Ticket and Transaction Without Ticket
+- Slicer: Activity Segment
+
+### Page 4 — Product & Transaction Analysis
+<img width="1327" height="751" alt="product   transaction 04 png" src="https://github.com/user-attachments/assets/b9959b2e-24c2-4dea-b8d1-261a627caea1" />
+
+**Answers:** Category and product performance; bulk vs. standard order split; payment method and weekday/weekend patterns.
+- KPI cards: Average Transaction Value, Bulk Orders, Bulk Order Rate, Standard Orders, Standard Order Rate
+- Bar chart: Revenue by Product Category
+- Bar chart: Top 10 Products by Revenue
+- Bar chart: Transaction Count by Order Type
+- Donut: Revenue by Payment Method
+- Donut: Revenue by Day Type
+- Slicer: Product Category
+
+### Page 5 — Support & Service Analysis
+<img width="1322" height="743" alt="support   service analysis 05 png" src="https://github.com/user-attachments/assets/418092ee-4de1-4fa7-9498-e7f4b5897f18" />
+
+**Answers:** Ticket volume by issue and status; resolution time and satisfaction by issue type; which product categories generate the most tickets.
+- KPI cards: Average Resolution Hours, Average Satisfaction Score, Customers With Ticket, Customers Without Ticket
+- Bar chart: Ticket Count by Issue Category
+- Column chart: Ticket Count by Status
+- Table: Resolution Time & Satisfaction by Issue Category
+- Bar chart: Ticket Count by Product Category *(uses the inactive relationship, activated via `USERELATIONSHIP()`)*
+- Slicer: related_category, Issue Category
+
+This page closes a gap identified back in the Excel stage: the `related_category` lookup existed in the workbook from early on but was never visualized until this report.
+
+---
+
+## Interactivity
+
+- Slicers on every page, scoped to that page's relevant dimensions
+- Buttons for quick filtering (Year, Product Category, Activity Segment, Issue Category)
+- Data labels enabled across all bar, column, and donut charts for direct readability without hovering
+- Blank/unlinked support tickets (general inquiries with no linked order) are explicitly labeled rather than shown as "(Blank)"
+
+---
+
+## Cross-Tool Validation
+
+| Metric | Excel | SQL | Python | Power BI |
+|---|---:|---:|---:|---:|
+| Total Revenue | ₹4,17,33,140.75 | ✅ | — | ₹41.73M ✅ |
+| Total Transactions | 24,244 | ✅ | ✅ | 24.24K ✅ |
+| Total Customers | 7,000 | ✅ | ✅ | 7K ✅ |
+| Repeat Customers | 3,907 | 3,907 | 3,907 | 3.9K ✅ |
+| One-Time Customers | 3,093 | 3,093 | 3,093 | 3.1K ✅ |
+| Repeat Customer Rate | 55.8% | 55.8% | 55.8% | 55.8% ✅ |
+| Inactive Customers (180+ days) | 1,394 | 1,394 | 1,394 | 1.4K ✅ |
+| Active / At-Risk / Inactive | 4,042 / 1,564 / 1,394 | — | — | 4.04K / 1.56K / 1.4K ✅ |
+| Bulk Orders (quantity > 10) | 457 | 457 | 457 | 457 ✅ |
+| Completed Revenue | ₹3,31,33,954.30 | — | — | ₹33.13M ✅ |
+
+Every headline number in the Power BI report matches the figure independently calculated in at least one earlier stage — the fourth and final cross-tool check in this project.
+
+---
+
+## Power BI Stage Status
+
+| Area | Status |
+|---|---|
+| Data connected to `RT` database | ✅ Complete |
+| Star schema built — 6 relationships (5 active, 1 correctly inactive) | ✅ Complete |
+| Core DAX measures built and validated | ✅ Complete |
+| 5 report pages built, no repeated charts | ✅ Complete |
+| Slicers, buttons, and data labels added | ✅ Complete |
+| All titles, labels, and truncated text corrected | ✅ Complete |
+| "(Blank)" category relabeled | ✅ Complete |
+| Cross-tool validation vs. Excel, SQL, and Python | ✅ Complete — exact match |
+
+**Power BI checkpoint: stage completed and validated.**
+
+---
+
+## Tools Used
+
+Power BI Desktop · Power Query · Data Modeling (star schema) · DAX (`CALCULATE`, `FILTER`, `DISTINCTCOUNT`, `USERELATIONSHIP`, `DATEDIFF`, `SWITCH`) · Slicers & Bookmarks
+
+---
+
+## Repository Structure
+
+```text
+Customer-Retention-Transaction-Analytics/
+│
+├── README.md
+│
+├── excel/
+│   ├── Customer_Analysis.xlsx
+│   └── images/
+│
+├── sql/
+│   ├── 30_core_queries.sql
+│
+├── python/
+│   └── Customer_Retention_Transaction_Analytics.ipynb
+│
+├── powerbi/            
+│   ├── Customer_Retention_Transaction_Analytics.pbix
+│   └── screenshots/
+│       ├── executive-overview.png
+│       ├── customer-analysis.png
+│       ├── retention-rfm-analysis.png
+│       ├── product-transaction-analysis.png
+│       └── support-service-analysis.png
+│
+└── report/
+    └── Customer Retention & Transaction Analytics — Final Project Report
