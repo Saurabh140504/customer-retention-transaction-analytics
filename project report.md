@@ -34,7 +34,7 @@ Finally, I brought everything into a 5-page interactive dashboard: Executive Ove
 
 **Revenue & Orders**
 - Total Revenue: **₹4,17,33,140.75** (~₹41.73M)
-- Revenue from Completed orders only: ₹3,31,33,954.30
+- Revenue from Completed orders only: **₹3,31,33,954.30** (~₹33.13M)
 - Average order value: ₹1,721.38
 - 24,244 total transactions
 
@@ -64,7 +64,6 @@ I think this part matters more than a clean summary, so I'm keeping it honest:
 
 - **My own counting mistake**: early on, I reported 452 "Bulk Orders" in my notes. When I rebuilt the same check in Python later, it came out to **457**. I went back and confirmed 457 is correct in Excel, SQL, and the raw data — my first count was just wrong, and I had to go fix it everywhere I'd already written it down.
 - **Import errors in SQL**: my date column kept importing as "0 rows" with no error message. Turns out MySQL couldn't read the date format from my Excel export. I had to load it into a temporary "staging" table first, then convert the dates properly before moving it into the real table.
-- **A security mistake**: I had my database password typed directly into my Python notebook. Before uploading anything to GitHub, I removed it and replaced it with a secure password prompt instead. I also changed my actual password, just to be safe.
 - **A logic bug in my dashboard**: one of my RFM tables in Power BI was showing "CUST-0001" as a "Total," instead of a real number. Turns out I'd accidentally set the field to show the "First" customer ID instead of "Count" of customers — an easy mistake to make, but it would've made my whole RFM section wrong if I hadn't caught it.
 - **Inconsistent definitions**: at one point, my "Inactive Customer" count didn't match between two parts of my Excel file — one said 1,394, the other said 1,398. I found the exact formula difference causing it (a `>` vs `>=`) and fixed it so both agree now.
 
@@ -103,7 +102,7 @@ excel/     → Excel workbook + documentation
 sql/       → Database script + 30 queries + explanations
 python/    → Jupyter notebook
 powerbi/   → Power BI dashboard file
-report/    → This report
+report/    → Project Report
 ```
 
 Thanks for reading — happy to explain any part of this in more detail.
