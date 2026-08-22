@@ -46,7 +46,6 @@ I also treated this project the way I'd want to be judged in a real job — not 
 - [Repository Structure](#repository-structure)
 - [Tools Used](#tools-used)
 - [Limitations](#limitations)
-- [What's Missing / Next Steps](#whats-missing--next-steps)
 
 ---
 
@@ -195,7 +194,7 @@ The 5 foreign keys were added only *after* all data was loaded and checked — e
 
 Grouped into 6 simple sections: checking the data is trustworthy, getting a feel for the basics, joining the tables together, understanding each customer's story, ranking and tracking trends over time, and answering the bigger business questions (top products, payment methods, weekday vs. weekend, support performance, acquisition channel).
 
-##### Full queries with plain-language explanations: [`sql/30_core_queries.sql`](SQL)
+##### Full SQL Queries: [`sql/30_core_queries.sql`](SQL)
 
 ✅ **SQL matches Excel exactly** on every core number — Total Revenue, Repeat Rate, Inactive Count, all identical.
 
@@ -273,7 +272,7 @@ The last chart on Page 5 closes a gap that had been sitting open since the Excel
 
 An early version of one RFM table showed "CUST-0001" as the grand "Total" — which made no sense for a total. It turned out I'd left the field set to aggregate by "First" value instead of "Count," so instead of counting customers, it was just showing whichever customer ID happened to appear first in the table. Fixed by switching it to a proper `DISTINCTCOUNT` measure.
 
-##### Power BI File: [Live Data Link](PK)
+##### Power BI File: [Download the .pbix](Power%20BI/Customer%20Retention%20%26%20Transaction%20Analysis.pbix)
 ✅ **Power BI matches Excel, SQL, and Python** on every headline number.
 
 ---
@@ -319,20 +318,20 @@ Customer-Retention-Transaction-Analytics/
 ├── README.md
 │
 ├── excel/
-│   ├── Customer_Analysis.xlsx
+│   ├── Customer_Retention_Transaction_Analytics.xlsx
 │   └── images/
 │       ├── data-model-relationships.png
 │       ├── pivot-table-summary.png
 │       └── pivot-charts-overview.png
 │
 ├── sql/
-│   ├── 30_core_queries.sql
+│   ├── Customer Retention & Transaction Analysis Updated.sql
 │
 ├── python/
 │   └── Customer_Retention_Transaction_Analytics.ipynb
 │
 ├── powerbi/
-│   ├── Customer_Retention_Transaction_Analytics.pbix
+│   ├── Customer Retention & Transaction Analysis.pbix
 │   └── screenshots/
 │       ├── executive-overview.png
 │       ├── customer-analysis.png
